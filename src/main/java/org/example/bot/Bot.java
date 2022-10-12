@@ -17,6 +17,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Bot extends TelegramLongPollingBot {
 
@@ -32,7 +33,7 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if(update.hasCallbackQuery()){
+        if (update.hasCallbackQuery()) {
             try {
                 choiceInputDownCatalog(update.getCallbackQuery());
             } catch (TelegramApiException | InterruptedException | IOException e) {
@@ -41,14 +42,14 @@ public class Bot extends TelegramLongPollingBot {
         }
         if (update.hasMessage()) {
             try {
-                choiceCommandForMessage(update.getMessage(),update);
+                choiceCommandForMessage(update.getMessage(), update);
             } catch (TelegramApiException | IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public void choiceCommandForMessage(Message message,Update update) throws TelegramApiException, IOException {
+    public void choiceCommandForMessage(Message message, Update update) throws TelegramApiException, IOException {
         if (message.hasText()) {
             switch (message.getText()) {
                 case "/start":
@@ -96,12 +97,38 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     public void choiceInputDownCatalog(CallbackQuery callbackQuery) throws TelegramApiException, InterruptedException, IOException {
-        execute(AnswerCallbackQuery
-                .builder()
-                .showAlert(true)
-                .text("hello")
-                .callbackQueryId(callbackQuery.getId())
-                .build());
+        Parser parser = new Parser();
+        Message message = callbackQuery.getMessage();
+        String[] callback = callbackQuery.getData().split(":");
+        String action = callback[0];
+        String addAttribute = callback[1];
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+        switch (action) {
+            case "DownCatalog":
+                List<ServerAttribute> items = parser.getInputDownCatalog(message.getText(), addAttribute);
+                buttons=createButtons(items);
+//                message.setText(items.get(0).getNameCatalog());
+                execute(SendMessage
+                        .builder()
+                        .chatId(message.getChatId())
+                        .replyToMessageId(message.getMessageId())
+                        .text("Список устройст лежащих в данном каталоге: \n"+items.get(0).getNameCatalog())
+                        .replyMarkup(
+                                InlineKeyboardMarkup
+                                        .builder()
+                                        .keyboard(buttons)
+                                        .build()
+                        )
+                        .build());
+                break;
+        }
+
+//        execute(AnswerCallbackQuery
+//                .builder()
+//                .showAlert(true)
+//                .text("hello")
+//                .callbackQueryId(callbackQuery.getId())
+//                .build());
     }
 
     public List<List<InlineKeyboardButton>> createButtons(ServerAttribute serverAttributes) {
@@ -113,7 +140,7 @@ public class Bot extends TelegramLongPollingBot {
                     InlineKeyboardButton
                             .builder()
                             .text(downCatalog.get(j))
-                            .callbackData("hi")
+                            .callbackData("DownCatalog:" + j)
                             .build()
             );
             if (j % 2 != 0) {
@@ -121,6 +148,29 @@ public class Bot extends TelegramLongPollingBot {
                 button = new ArrayList<>();
             }
             if (downCatalog.size() % 2 != 0 && j == downCatalog.size() - 1) {
+                buttons.add(button);
+            }
+        }
+        return buttons;
+    }
+
+    public List<List<InlineKeyboardButton>> createButtons(List<ServerAttribute> itemsList) {
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+        List<InlineKeyboardButton> button = new ArrayList<>();
+
+        for (int j = 0; j < itemsList.size(); j++) {
+            button.add(
+                    InlineKeyboardButton
+                            .builder()
+                            .text(itemsList.get(j).getName())
+                            .callbackData("DownCatalog:" + j)
+                            .build()
+            );
+            if (j % 2 != 0) {
+                buttons.add(button);
+                button = new ArrayList<>();
+            }
+            if (itemsList.size() % 2 != 0 && j == itemsList.size() - 1) {
                 buttons.add(button);
             }
         }
