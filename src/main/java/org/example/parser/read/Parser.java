@@ -9,14 +9,12 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class Parser {
 
-    public  Document getDocument(String url) throws IOException {
+    public Document getDocument(String url) throws IOException {
 //        String url = "https://ekom.uz";Главная страница
 //        String url = "https://ekom.uz/setevoe-oborudovanie/aktivnoe-oborudovanie/servera/";
 //                "https://ekom.uz/setevoe-oborudovanie/aktivnoe-oborudovanie/servera/";
@@ -68,22 +66,22 @@ public class Parser {
     public List<ServerAttribute> showCategory() throws IOException {
         int i = 1;
         List<ServerAttribute> serverAttributes = new ArrayList<>();
-        List<String> nameDownCatalogList=null;
+        List<String> nameDownCatalogList = null;
         String newUrl;
         Scanner in = new Scanner(System.in);
         Document document = getDocument("https://ekom.uz");
         Element body = document.body();
         Elements catalogs = body.select("ul[class=ty-menu__items cm-responsive-menu]");//сами ссылки на котологи
-        System.out.println("Выберите каталог");
+//        System.out.println("Выберите каталог");
         for (Element catalog : catalogs.select("li[class=ty-menu__item cm-menu-item-responsive first-lvl]")) {
             String nameCatalog = catalog.select("span[class=menu-lvl-ctn exp-wrap]").select("bdi").text();
             System.out.println(i++ + ":" + nameCatalog);//название католога
-            nameDownCatalogList=new ArrayList<>();
-            for(Element downCatalog:catalog.select("div.second-lvl")){
+            nameDownCatalogList = new ArrayList<>();
+            for (Element downCatalog : catalog.select("div.second-lvl")) {
                 nameDownCatalogList.add(downCatalog.select("div.ty-menu__submenu-item-header").select("bdi").text());
-                System.out.println("\t"+downCatalog.select("div.ty-menu__submenu-item-header").select("bdi").text());
+//                System.out.println("\t" + downCatalog.select("div.ty-menu__submenu-item-header").select("bdi").text());
             }
-            serverAttributes.add(new ServerAttribute(nameCatalog,nameDownCatalogList));
+            serverAttributes.add(new ServerAttribute(nameCatalog, nameDownCatalogList));
         }
 //        i = 1;
 //        int indexCatalog = in.nextInt();
@@ -109,5 +107,26 @@ public class Parser {
 //                .select("a")
 //                .attr("href");
         return serverAttributes;
+    }
+
+    public List<ServerAttribute> getInputDownCatalog(String nameCatalog, String id) throws IOException {
+        Document document = getDocument("https://ekom.uz");
+        Element body = document.body();
+        List<ServerAttribute> itemsList=new ArrayList<>();
+        Elements catalogs = body.select("ul[class=ty-menu__items cm-responsive-menu]");
+        for (Element catalog : catalogs.select("li[class=ty-menu__item cm-menu-item-responsive first-lvl]")) {
+            if (nameCatalog.equals(catalog.select("span[class=menu-lvl-ctn exp-wrap]").select("bdi").text())) {
+                String nameDownCatalog=catalog.select("div.second-lvl").select("div.ty-menu__submenu-item-header").get(Integer.parseInt(id)).select("bdi").text();
+                Element inputDownCatalogs = catalog.select("div.ty-menu__submenu-col").select("div.second-lvl").get(Integer.parseInt(id));
+                Elements items = inputDownCatalogs.select("div.ty-menu__submenu-list").select("div.ty-menu__submenu-item");
+//                System.out.println(inputDownCatalogs.select("div.ty-menu__submenu-list").select("div.ty-menu__submenu-item"));
+                for (Element item : items) {
+                    String typeItem = item.select("a").select("span").text();
+                    String hrefItem = item.select("a").attr("href");
+                    itemsList.add(new ServerAttribute(nameDownCatalog,typeItem, hrefItem));
+                }
+            }
+        }
+        return itemsList;
     }
 }
