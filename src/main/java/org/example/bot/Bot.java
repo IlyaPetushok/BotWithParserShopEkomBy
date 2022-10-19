@@ -1,23 +1,19 @@
 package org.example.bot;
 
-import org.example.parser.entity.ServerAttribute;
-import org.example.parser.read.Parser;
+import org.example.bot.command.ChoiceCatalog;
+import org.example.bot.command.ChoiceDownCatalog;
+import org.example.bot.command.NextItemCommand;
+import org.example.bot.command.ShowItemCommand;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class Bot extends TelegramLongPollingBot {
 
@@ -42,14 +38,14 @@ public class Bot extends TelegramLongPollingBot {
         }
         if (update.hasMessage()) {
             try {
-                choiceCommandForMessage(update.getMessage(), update);
+                choiceCommandForMessage(update.getMessage());
             } catch (TelegramApiException | IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public void choiceCommandForMessage(Message message, Update update) throws TelegramApiException, IOException {
+    public void choiceCommandForMessage(Message message) throws TelegramApiException, IOException {
         if (message.hasText()) {
             switch (message.getText()) {
                 case "/start":
@@ -67,29 +63,14 @@ public class Bot extends TelegramLongPollingBot {
                     execute(SendMessage
                             .builder()
                             .chatId(message.getChatId())
-                            .text("Выберите Команду")
                             .text("Выберите команду \n /choice_catalog")
                             .build());
                     break;
                 case "/choice_catalog":
-                    Parser parser = new Parser();
-//                    String url=parser.showCategory();
-                    List<ServerAttribute> catalogs = parser.showCategory();
-                    for (int i = 0; i < catalogs.size(); i++) {
-                        List<List<InlineKeyboardButton>> buttons = createButtons(catalogs.get(i));
-                        execute(SendMessage
-                                .builder()
-                                .chatId(message.getChatId())
-                                .text("<i>" + catalogs.get(i).getName() + "</i>")
-                                .parseMode(ParseMode.HTML)
-                                .replyMarkup(
-                                        InlineKeyboardMarkup
-                                                .builder()
-                                                .keyboard(buttons)
-                                                .build()
-
-                                )
-                                .build());
+                    ChoiceCatalog choiceCatalog = new ChoiceCatalog();
+                    List<SendMessage> messageList = choiceCatalog.sendMSG(message);
+                    for (SendMessage sendMessage : messageList) {
+                        execute(sendMessage);
                     }
                     break;
             }
@@ -97,83 +78,56 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     public void choiceInputDownCatalog(CallbackQuery callbackQuery) throws TelegramApiException, InterruptedException, IOException {
-        Parser parser = new Parser();
         Message message = callbackQuery.getMessage();
         String[] callback = callbackQuery.getData().split(":");
         String action = callback[0];
         String addAttribute = callback[1];
-        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+        String page = null;
+        if (action.equals("NextItem")) {
+            page = callback[2];
+        }
+        ShowItemCommand showItemCommand;
         switch (action) {
-            case "DownCatalog":
-                List<ServerAttribute> items = parser.getInputDownCatalog(message.getText(), addAttribute);
-                buttons=createButtons(items);
-//                message.setText(items.get(0).getNameCatalog());
-                execute(SendMessage
-                        .builder()
-                        .chatId(message.getChatId())
-                        .replyToMessageId(message.getMessageId())
-                        .text("Список устройст лежащих в данном каталоге: \n"+items.get(0).getNameCatalog())
-                        .replyMarkup(
-                                InlineKeyboardMarkup
-                                        .builder()
-                                        .keyboard(buttons)
-                                        .build()
-                        )
-                        .build());
+            case "ChoiceDownCatalog":
+                ChoiceDownCatalog choiceDownCatalog = new ChoiceDownCatalog();
+                execute(choiceDownCatalog.sendMsg(message, addAttribute));
+                break;
+            case "ShowItem":
+                showItemCommand = new ShowItemCommand();
+                if (showItemCommand.sendMsg(message, addAttribute) == null) {
+                    execute(AnswerCallbackQuery
+                            .builder()
+                            .showAlert(true)
+                            .text("В данном каталоге сейчас нету товаров")
+                            .callbackQueryId(callbackQuery.getId())
+                            .build());
+                } else {
+                    execute(showItemCommand.sendMsg(message, addAttribute));
+                }
+                break;
+            case "NextItem":
+                NextItemCommand nextItemCommand = new NextItemCommand();
+                if (nextItemCommand.sendMsg(message, addAttribute, page) == null) {
+                    execute(AnswerCallbackQuery
+                            .builder()
+                            .showAlert(true)
+                            .text("Это был последний элемент")
+                            .callbackQueryId(callbackQuery.getId())
+                            .build());
+                } else {
+                    execute(nextItemCommand.sendMsg(message, addAttribute, page));
+                }
                 break;
         }
+    }
 
+}
+
+
+//alert
 //        execute(AnswerCallbackQuery
 //                .builder()
 //                .showAlert(true)
 //                .text("hello")
 //                .callbackQueryId(callbackQuery.getId())
 //                .build());
-    }
-
-    public List<List<InlineKeyboardButton>> createButtons(ServerAttribute serverAttributes) {
-        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
-        List<InlineKeyboardButton> button = new ArrayList<>();
-        List<String> downCatalog = serverAttributes.getNameDownCatalog();
-        for (int j = 0; j < downCatalog.size(); j++) {
-            button.add(
-                    InlineKeyboardButton
-                            .builder()
-                            .text(downCatalog.get(j))
-                            .callbackData("DownCatalog:" + j)
-                            .build()
-            );
-            if (j % 2 != 0) {
-                buttons.add(button);
-                button = new ArrayList<>();
-            }
-            if (downCatalog.size() % 2 != 0 && j == downCatalog.size() - 1) {
-                buttons.add(button);
-            }
-        }
-        return buttons;
-    }
-
-    public List<List<InlineKeyboardButton>> createButtons(List<ServerAttribute> itemsList) {
-        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
-        List<InlineKeyboardButton> button = new ArrayList<>();
-
-        for (int j = 0; j < itemsList.size(); j++) {
-            button.add(
-                    InlineKeyboardButton
-                            .builder()
-                            .text(itemsList.get(j).getName())
-                            .callbackData("DownCatalog:" + j)
-                            .build()
-            );
-            if (j % 2 != 0) {
-                buttons.add(button);
-                button = new ArrayList<>();
-            }
-            if (itemsList.size() % 2 != 0 && j == itemsList.size() - 1) {
-                buttons.add(button);
-            }
-        }
-        return buttons;
-    }
-}
