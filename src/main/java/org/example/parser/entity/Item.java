@@ -41,4 +41,12 @@ public class Item {
     public void setPrice(String price) {
         this.price = price;
     }
+
+    @Override
+    public String toString() {
+        return "name:" + name + '\n' +
+                "status:" + status + '\n'+
+                "price:" + price + '\n'+
+                "photo:" + urlPhoto + '\n';
+    }
 }

@@ -17,9 +17,8 @@ public class NextItemCommand {
     public SendMessage sendMsg(Message message, String addAttribute, String pageNumber) throws IOException {
         Parser parser = new Parser();
         Integer page = Integer.parseInt(pageNumber);
-        ServerAttribute infoItem = null;
         String[] msg = message.getText().split("\n");
-        infoItem = parser.getHrefItem(msg[0], msg[1], msg[2]);
+        ServerAttribute infoItem = parser.getHrefItem(msg[0], msg[1], msg[2]);
         if (Integer.parseInt(addAttribute) > 12) {
             page++;
             addAttribute = "0";
@@ -34,10 +33,7 @@ public class NextItemCommand {
                     .builder()
                     .keyboard(createButton(Integer.parseInt(addAttribute), String.valueOf(page)))
                     .build());
-            sendMessage.setText(msg[0] + "\n" + msg[1] + "\n" + msg[2] + "\n" + item.getUrlPhoto() + "\n"
-                    + item.getName() + "\n"
-                    + item.getStatus() + "\n"
-                    + item.getPrice());
+            sendMessage.setText(msg[0] + "\n" + msg[1] + "\n" + msg[2] + "\n" +item.toString());
             return sendMessage;
         }
         return null;
