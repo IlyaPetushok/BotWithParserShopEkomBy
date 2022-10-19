@@ -7,6 +7,7 @@ public class ServerAttribute {
     private String name;
     private String href;
     private String nameCatalog;
+    private String typeItem;
 
     public String getNameCatalog() {
         return nameCatalog;
@@ -21,6 +22,19 @@ public class ServerAttribute {
     public ServerAttribute(String name,List<String> nameDownCatalog){
         this.name=name;
         this.nameDownCatalog=nameDownCatalog;
+    }
+
+    public String getTypeItem() {
+        return typeItem;
+    }
+
+    public void setTypeItem(String typeItem) {
+        this.typeItem = typeItem;
+    }
+
+    public ServerAttribute(String typeItem, String href){
+        this.typeItem=typeItem;
+        this.href=href;
     }
 
     public ServerAttribute(String nameCatalog,String name,String href){
