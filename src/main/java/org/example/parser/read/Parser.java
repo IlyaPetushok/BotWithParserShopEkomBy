@@ -6,6 +6,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -42,18 +43,19 @@ public class Parser {
         } else {
             strQuantityPage = "0";
         }
-        System.out.println("quantity page:" + strQuantityPage);
-        Element itemsBlock = body.select("div.grid-list").first();
-        if (itemsBlock != null) {
-            Element items = itemsBlock.getElementById("categories_view_pagination_contents");
-            for (Element item : items.select("div.ty-column3").select("div.ut2-gl__item ")) {
-                String photo = item.select("div.ut2-gl__image").select("img.ty-pict").attr("data-src");
-                String name = item.select("div.ut2-gl__name").text();
-                String status = item.select("div.ut2-gl__amount").text();
-                String price = item.select("div.ut2-gl__price").text();
-                itemsList.add(new Item(photo, name, status, price));
+        if (Integer.parseInt(numberPage) <= Integer.parseInt(strQuantityPage) && !strQuantityPage.equals("0")) {
+            Element itemsBlock = body.select("div.grid-list").first();
+            if (itemsBlock != null) {
+                Element items = itemsBlock.getElementById("categories_view_pagination_contents");
+                for (Element item : items.select("div.ty-column3").select("div.ut2-gl__item ")) {
+                    String photo = item.select("div.ut2-gl__image").select("img.ty-pict").attr("data-src");
+                    String name = item.select("div.ut2-gl__name").text();
+                    String status = item.select("div.ut2-gl__amount").text();
+                    String price = item.select("div.ut2-gl__price").text();
+                    itemsList.add(new Item(photo, name, status, price));
+                }
+                return itemsList;
             }
-            return itemsList;
         }
         return null;
     }
@@ -97,7 +99,7 @@ public class Parser {
         return catalogs.select("li[class=ty-menu__item cm-menu-item-responsive first-lvl]");
     }
 
-    private Elements getItems(Element document){
+    private Elements getItems(Element document) {
         return document.select("div.ty-menu__submenu-list").select("div.ty-menu__submenu-item");
     }
 

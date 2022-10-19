@@ -57,7 +57,7 @@ public class ShowItemCommand {
                 .build());
         button.add(InlineKeyboardButton
                 .builder()
-                .callbackData("NextItem:" + (index + 1) + ":0")
+                .callbackData("NextItem:" + (index + 1) + ":1")
                 .text("Следующий")
                 .build());
         buttons.add(button);

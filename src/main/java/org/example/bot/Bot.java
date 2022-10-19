@@ -122,12 +122,3 @@ public class Bot extends TelegramLongPollingBot {
     }
 
 }
-
-
-//alert
-//        execute(AnswerCallbackQuery
-//                .builder()
-//                .showAlert(true)
-//                .text("hello")
-//                .callbackQueryId(callbackQuery.getId())
-//                .build());
