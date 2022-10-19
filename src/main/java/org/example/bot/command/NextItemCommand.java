@@ -19,22 +19,24 @@ public class NextItemCommand {
         Integer page = Integer.parseInt(pageNumber);
         String[] msg = message.getText().split("\n");
         ServerAttribute infoItem = parser.getHrefItem(msg[0], msg[1], msg[2]);
-        if (Integer.parseInt(addAttribute) > 12) {
+        if (Integer.parseInt(addAttribute) >= 12) {
             page++;
             addAttribute = "0";
         }
         List<Item> items = getItem(infoItem, String.valueOf(page));
-        if (!addAttribute.equals(String.valueOf(items.size()))) {
-            Item item = items.get(Integer.parseInt(addAttribute));
+        if (items != null) {
+            if (Integer.parseInt(addAttribute) != items.size()) {
+                Item item = items.get(Integer.parseInt(addAttribute));
 
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(message.getChatId());
-            sendMessage.setReplyMarkup(InlineKeyboardMarkup
-                    .builder()
-                    .keyboard(createButton(Integer.parseInt(addAttribute), String.valueOf(page)))
-                    .build());
-            sendMessage.setText(msg[0] + "\n" + msg[1] + "\n" + msg[2] + "\n" +item.toString());
-            return sendMessage;
+                SendMessage sendMessage = new SendMessage();
+                sendMessage.setChatId(message.getChatId());
+                sendMessage.setReplyMarkup(InlineKeyboardMarkup
+                        .builder()
+                        .keyboard(createButton(Integer.parseInt(addAttribute), String.valueOf(page)))
+                        .build());
+                sendMessage.setText(msg[0] + "\n" + msg[1] + "\n" + msg[2] + "\n" + item.toString());
+                return sendMessage;
+            }
         }
         return null;
     }

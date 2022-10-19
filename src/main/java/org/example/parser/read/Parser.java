@@ -21,29 +21,12 @@ public class Parser {
 
     public List<Item> itemsShow(String url, String numberPage) throws IOException {
         if (Integer.parseInt(numberPage) > 1) {
-            url += "/page-" + numberPage + "/";
+            url += "page-" + numberPage + "/";
         }
         Document document = getDocument(url);
         Element body = document.body();
-        Element quantityPage;
+        //read quantity page was here
         List<Item> itemsList = new ArrayList<>();
-        String strQuantityPage;
-        if (body.select("div.ty-pagination__bottom").select("a.ty-pagination__range").size() > 0) {
-            quantityPage = body.select("div.ty-pagination__bottom").select("a.ty-pagination__range").first();
-            String[] arr = quantityPage.text().split("- ");
-            strQuantityPage = arr[arr.length - 1];
-        } else if (body.select("div.ty-pagination__bottom").select("a").size() > 0) {
-            Elements page = body.select("div.ty-pagination__bottom").select("a");
-            quantityPage = page
-                    .stream()
-                    .filter(s -> s == page.get(page.size() - 2))
-                    .findAny()
-                    .orElse(null);
-            strQuantityPage = quantityPage.text();
-        } else {
-            strQuantityPage = "0";
-        }
-        if (Integer.parseInt(numberPage) <= Integer.parseInt(strQuantityPage) && !strQuantityPage.equals("0")) {
             Element itemsBlock = body.select("div.grid-list").first();
             if (itemsBlock != null) {
                 Element items = itemsBlock.getElementById("categories_view_pagination_contents");
@@ -56,7 +39,6 @@ public class Parser {
                 }
                 return itemsList;
             }
-        }
         return null;
     }
 
@@ -107,7 +89,6 @@ public class Parser {
         Document document = getDocument(HOME_PAGE);
         Element body = document.body();
         String hrefItem = null, typeItem = null;
-        List<ServerAttribute> itemsList = new ArrayList<>();
         for (Element catalog : getCatalog(body)) {
             if (nameCatalog.equals(catalog.select("span[class=menu-lvl-ctn exp-wrap]").select("bdi").text())) {
                 for (Element downCatalog : catalog.select("div.second-lvl")) {
@@ -125,3 +106,21 @@ public class Parser {
         return new ServerAttribute(typeItem, hrefItem);
     }
 }
+
+
+//    String strQuantityPage;
+//        if (body.select("div.ty-pagination__bottom").select("a.ty-pagination__range").size() > 0) {
+//            quantityPage = body.select("div.ty-pagination__bottom").select("a.ty-pagination__range").first();
+//            String[] arr = quantityPage.text().split("- ");
+//            strQuantityPage = arr[arr.length - 1];
+//        } else if (body.select("div.ty-pagination__bottom").select("a").size() > 0) {
+//            Elements page = body.select("div.ty-pagination__bottom").select("a");
+//            quantityPage = page
+//                    .stream()
+//                    .filter(s -> s == page.get(page.size() - 2))
+//                    .findAny()
+//                    .orElse(null);
+//            strQuantityPage = quantityPage.text();
+//        } else {
+//            strQuantityPage = "0";
+//        }
